@@ -96,4 +96,27 @@ public class ServicioUsuario {
 		return usuarios;
 	}
 
+	/**
+	 * Elimina un usuario existente
+	 * 
+	 * @param usuario el usuario a eliminar
+	 * @throws IllegalArgumentException si el usuario no existe
+	 */
+	public void eliminaUsuario(Usuario usuario) {
+		if (usuario == null || !usuarioRepository.existsById(usuario.getIdUsuario())) {
+			throw new IllegalArgumentException("El usuario no existe");
+		}
+
+		// Primero encontrar y remover el usuario de su grupo
+		for (Grupo grupo : grupoRepository.findAll()) {
+			if (grupo.getUsuarios().contains(usuario)) {
+				grupo.removeUsuario(usuario);
+				grupoRepository.save(grupo);
+				break;
+			}
+		}
+
+		// Ahora sí podemos eliminar el usuario
+		usuarioRepository.delete(usuario);
+	}
 }

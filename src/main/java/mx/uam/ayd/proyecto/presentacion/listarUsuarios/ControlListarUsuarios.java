@@ -34,4 +34,27 @@ public class ControlListarUsuarios {
 		ventana.muestra(this, usuarios);
 	}
 
+	/**
+	 * Elimina un usuario y actualiza la vista
+	 * 
+	 * @param usuario el usuario a eliminar
+	 */
+	public void eliminaUsuario(Usuario usuario) {
+		try {
+			servicioUsuario.eliminaUsuario(usuario);
+			// Actualiza la vista con la lista actualizada
+			inicia();
+		} catch (IllegalArgumentException e) {
+			log.error("Error al eliminar usuario: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Recupera la lista actualizada de usuarios
+	 * 
+	 * @return lista de usuarios
+	 */
+	public List<Usuario> getUsuarios() {
+		return servicioUsuario.recuperaUsuarios();
+	}
 }

@@ -7,8 +7,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -74,7 +78,66 @@ public class VentanaListarUsuarios {
 		TableColumn<Usuario, Integer> edadColumn = new TableColumn<>("Edad");
 		edadColumn.setCellValueFactory(new PropertyValueFactory<>("edad"));
 		
-		tableUsuarios.getColumns().addAll(idColumn, nombreColumn, apellidoColumn, edadColumn);
+		// Add Actions column with delete button
+		TableColumn<Usuario, Void> actionsColumn = new TableColumn<>("Actions");
+		actionsColumn.setCellFactory(col -> new TableCell<>() {
+			private final Button deleteButton = new Button("Eliminar");
+			
+			{
+				deleteButton.setOnAction(e -> {
+					Usuario usuario = getTableView().getItems().get(getIndex());
+					
+					// Mostrar diálogo de confirmación
+					Alert confirmAlert = new Alert(AlertType.CONFIRMATION);
+					confirmAlert.setTitle("Confirmar eliminación");
+					confirmAlert.setHeaderText("¿Está seguro que desea eliminar este usuario?");
+					confirmAlert.setContentText("Usuario: " + usuario.getNombre() + " " + usuario.getApellido());
+					confirmAlert.initOwner(stage);
+					
+					confirmAlert.showAndWait().ifPresent(response -> {
+						if (response == ButtonType.OK) {
+							try {
+								control.eliminaUsuario(usuario);
+								
+								// Mostrar mensaje de éxito
+								Alert successAlert = new Alert(AlertType.INFORMATION);
+								successAlert.setTitle("Éxito");
+								successAlert.setHeaderText("Usuario eliminado");
+								successAlert.setContentText("El usuario ha sido eliminado correctamente.");
+								successAlert.initOwner(stage);
+								successAlert.showAndWait();
+								
+								// Actualizar la tabla después de eliminar
+								Platform.runLater(() -> {
+									List<Usuario> usuarios = control.getUsuarios();
+									tableUsuarios.setItems(FXCollections.observableArrayList(usuarios));
+								});
+								
+							} catch (Exception ex) {
+								Alert errorAlert = new Alert(AlertType.ERROR);
+								errorAlert.setTitle("Error");
+								errorAlert.setHeaderText("Error al eliminar usuario");
+								errorAlert.setContentText("No se pudo eliminar el usuario. " + ex.getMessage());
+								errorAlert.initOwner(stage);
+								errorAlert.showAndWait();
+							}
+						}
+					});
+				});
+			}
+			
+			@Override
+			protected void updateItem(Void item, boolean empty) {
+				super.updateItem(item, empty);
+				if (empty) {
+					setGraphic(null);
+				} else {
+					setGraphic(deleteButton);
+				}
+			}
+		});
+		
+		tableUsuarios.getColumns().addAll(idColumn, nombreColumn, apellidoColumn, edadColumn, actionsColumn);
 		
 		Button btnCerrar = new Button("Cerrar");
 		btnCerrar.setOnAction(e -> stage.close());
