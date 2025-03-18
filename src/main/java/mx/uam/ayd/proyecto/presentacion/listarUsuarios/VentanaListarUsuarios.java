@@ -20,9 +20,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import mx.uam.ayd.proyecto.negocio.modelo.Usuario;
+import mx.uam.ayd.proyecto.presentacion.eliminarUsuario.ControlEliminarUsuario;
 
 /**
  * Ventana para listar usuarios usando JavaFX
@@ -33,6 +35,10 @@ public class VentanaListarUsuarios {
 	private Stage stage;
 	private TableView<Usuario> tableUsuarios;
 	private ControlListarUsuarios control;
+	
+	@Autowired
+	private ControlEliminarUsuario controlEliminar;
+	
 	private boolean initialized = false;
 
 	/**
@@ -97,22 +103,23 @@ public class VentanaListarUsuarios {
 					confirmAlert.showAndWait().ifPresent(response -> {
 						if (response == ButtonType.OK) {
 							try {
-								control.eliminaUsuario(usuario);
-								
-								// Mostrar mensaje de éxito
-								Alert successAlert = new Alert(AlertType.INFORMATION);
-								successAlert.setTitle("Éxito");
-								successAlert.setHeaderText("Usuario eliminado");
-								successAlert.setContentText("El usuario ha sido eliminado correctamente.");
-								successAlert.initOwner(stage);
-								successAlert.showAndWait();
-								
-								// Actualizar la tabla después de eliminar
-								Platform.runLater(() -> {
-									List<Usuario> usuarios = control.getUsuarios();
-									tableUsuarios.setItems(FXCollections.observableArrayList(usuarios));
-								});
-								
+								if (controlEliminar.eliminaUsuario(usuario)) {
+									// Mostrar mensaje de éxito
+									Alert successAlert = new Alert(AlertType.INFORMATION);
+									successAlert.setTitle("Éxito");
+									successAlert.setHeaderText("Usuario eliminado");
+									successAlert.setContentText("El usuario ha sido eliminado correctamente.");
+									successAlert.initOwner(stage);
+									successAlert.showAndWait();
+									
+									// Actualizar la tabla después de eliminar
+									Platform.runLater(() -> {
+										List<Usuario> usuarios = control.getUsuarios();
+										tableUsuarios.setItems(FXCollections.observableArrayList(usuarios));
+									});
+								} else {
+									throw new Exception("No se pudo eliminar el usuario");
+								}
 							} catch (Exception ex) {
 								Alert errorAlert = new Alert(AlertType.ERROR);
 								errorAlert.setTitle("Error");
@@ -151,36 +158,30 @@ public class VentanaListarUsuarios {
 		vboxBottom.setPadding(new Insets(10));
 		vboxBottom.getChildren().add(btnCerrar);
 		
-		BorderPane borderPane = new BorderPane();
-		borderPane.setTop(vboxTop);
-		borderPane.setCenter(tableUsuarios);
-		borderPane.setBottom(vboxBottom);
+		BorderPane root = new BorderPane();
+		root.setTop(vboxTop);
+		root.setCenter(tableUsuarios);
+		root.setBottom(vboxBottom);
 		
-		Scene scene = new Scene(borderPane, 450, 400);
+		Scene scene = new Scene(root, 600, 400);
 		stage.setScene(scene);
 		
 		initialized = true;
 	}
 	
 	/**
-	 * Muestra la ventana y carga los usuarios
+	 * Muestra la ventana
 	 * 
-	 * @param control El controlador asociado
-	 * @param usuarios La lista de usuarios a mostrar
+	 * @param control el controlador de la ventana
+	 * @param usuarios la lista de usuarios a mostrar
 	 */
 	public void muestra(ControlListarUsuarios control, List<Usuario> usuarios) {
 		this.control = control;
 		
-		if (!Platform.isFxApplicationThread()) {
-			Platform.runLater(() -> this.muestra(control, usuarios));
-			return;
-		}
-		
-		initializeUI();
-		
-		ObservableList<Usuario> data = FXCollections.observableArrayList(usuarios);
-		tableUsuarios.setItems(data);
-		
-		stage.show();
+		Platform.runLater(() -> {
+			initializeUI();
+			tableUsuarios.setItems(FXCollections.observableArrayList(usuarios));
+			stage.show();
+		});
 	}
 }
