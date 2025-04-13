@@ -56,14 +56,31 @@ class GrupoTest {
 	
 	@Test
 	void testRemoveUsuario() {
-				
-		// Caso de prueba 1
+		// Caso de prueba 1: Remover un usuario existente
+		grupoPrueba.setNombre("CK01");
+		Usuario usuarioPrueba = new Usuario();
+		usuarioPrueba.setNombre("Juan");
+		usuarioPrueba.setApellido("Perez");
+		usuarioPrueba.setEdad(20);
 		
-		// Caso de prueba 2
+		// Primero agregamos el usuario
+		grupoPrueba.addUsuario(usuarioPrueba);
 		
-		// Caso de prueba n
+		// Ahora intentamos removerlo
+		boolean resultado = grupoPrueba.removeUsuario(usuarioPrueba);
+		assertTrue(resultado, "El usuario debería removerse exitosamente");
 		
+		// Caso de prueba 2: Remover un usuario que no existe en el grupo
+		Usuario usuarioNoExistente = new Usuario();
+		usuarioNoExistente.setNombre("María");
+		usuarioNoExistente.setApellido("González");
 		
+		resultado = grupoPrueba.removeUsuario(usuarioNoExistente);
+		assertFalse(resultado, "No se debería poder remover un usuario que no existe en el grupo");
+		
+		// Caso de prueba 3: Intentar remover null
+		assertThrows(IllegalArgumentException.class, () -> {
+			grupoPrueba.removeUsuario(null);
+		}, "Debería lanzar excepción al intentar remover un usuario null");
 	}
-
 }

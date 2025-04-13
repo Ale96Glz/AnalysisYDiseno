@@ -1,10 +1,11 @@
 package mx.uam.ayd.proyecto.negocio;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import mx.uam.ayd.proyecto.datos.GrupoRepository;
 import mx.uam.ayd.proyecto.datos.UsuarioRepository;
 import mx.uam.ayd.proyecto.negocio.modelo.Usuario;
+import mx.uam.ayd.proyecto.negocio.modelo.Grupo;
 
 @ExtendWith(MockitoExtension.class)
 class ServicioUsuarioTest {
@@ -31,20 +33,13 @@ class ServicioUsuarioTest {
 	@Test
 	void testRecuperaUsuarios() {
 
-		// Caso de prueba 1: No hay usuarios guardados, me regresa lista vacía
-		
 		List <Usuario> usuarios = servicioUsuario.recuperaUsuarios();
 		
 		assertEquals(0,usuarios.size());
 		
 		
-		// Caso de prueba 2: Si hay usuarios guardados, me regresa lista con usuarios
-
 		ArrayList <Usuario> lista = new ArrayList <> ();
 
-		// Tengo que crear un Iterable <Usuario> para que el método 
-		// usuarioRepository.findAll() no me regrese una lista vacía
-		// cuando lo invoco
 		Usuario usuario1 = new Usuario();
 		usuario1.setNombre("Juan");
 		usuario1.setApellido("Perez");
@@ -58,19 +53,89 @@ class ServicioUsuarioTest {
 
 		Iterable <Usuario> listaIterable = lista;
 		
-		// Al usar when, lo que hacemos es que definimos un comportamiento
-		// para la invoación del método.
-		// A partir de este punto, la invocación a usuarioRepository.findAll() ya
-		// no me regresa una lista vacía, si no que me regresa una listaLigada
-		// vista como Iterable que tiene dos elementos
 		when(usuarioRepository.findAll()).thenReturn(listaIterable);
 		
 		usuarios = servicioUsuario.recuperaUsuarios();
 		
 		assertEquals(2,usuarios.size());
-		
-		
 	}
 
+	@Test
+	void testEliminaUsuario_UsuarioExistente() {
+		Usuario usuario = new Usuario();
+		usuario.setIdUsuario(1L);
+		usuario.setNombre("Juan");
+		usuario.setApellido("Pérez");
 
+		when(usuarioRepository.existsById(1L)).thenReturn(true);
+
+		assertDoesNotThrow(() -> servicioUsuario.eliminaUsuario(usuario));
+	}
+
+	@Test
+	void testEliminaUsuario_UsuarioNoExistente() {
+		Usuario usuario = new Usuario();
+		usuario.setIdUsuario(1L);
+		usuario.setNombre("Juan");
+		usuario.setApellido("Pérez");
+
+		when(usuarioRepository.existsById(1L)).thenReturn(false);
+
+		assertThrows(IllegalArgumentException.class, () -> servicioUsuario.eliminaUsuario(usuario));
+	}
+
+	@Test
+	void testEliminaUsuario_UsuarioNull() {
+		assertThrows(IllegalArgumentException.class, () -> servicioUsuario.eliminaUsuario(null));
+	}
+
+	@Test
+	void testAgregaUsuario_Exitoso() {
+		String nombre = "Juan";
+		String apellido = "Pérez";
+		String nombreGrupo = "Grupo1";
+		
+		when(usuarioRepository.findByNombreAndApellido(nombre, apellido)).thenReturn(null);
+		
+		Grupo grupo = new Grupo();
+		grupo.setNombre(nombreGrupo);
+		when(grupoRepository.findByNombre(nombreGrupo)).thenReturn(grupo);
+		
+		Usuario resultado = servicioUsuario.agregaUsuario(nombre, apellido, nombreGrupo);
+		
+		assertNotNull(resultado);
+		assertEquals(nombre, resultado.getNombre());
+		assertEquals(apellido, resultado.getApellido());
+		verify(grupoRepository).save(any(Grupo.class));
+	}
+	
+	@Test
+	void testAgregaUsuario_UsuarioYaExiste() {
+		String nombre = "Juan";
+		String apellido = "Pérez";
+		String nombreGrupo = "Grupo1";
+		
+		Usuario usuarioExistente = new Usuario();
+		usuarioExistente.setNombre(nombre);
+		usuarioExistente.setApellido(apellido);
+		
+		when(usuarioRepository.findByNombreAndApellido(nombre, apellido)).thenReturn(usuarioExistente);
+		
+		assertThrows(IllegalArgumentException.class, 
+			() -> servicioUsuario.agregaUsuario(nombre, apellido, nombreGrupo));
+	}
+	
+	@Test
+	void testAgregaUsuario_GrupoNoExiste() {
+		String nombre = "Juan";
+		String apellido = "Pérez";
+		String nombreGrupo = "GrupoInexistente";
+		
+		when(usuarioRepository.findByNombreAndApellido(nombre, apellido)).thenReturn(null);
+		
+		when(grupoRepository.findByNombre(nombreGrupo)).thenReturn(null);
+		
+		assertThrows(IllegalArgumentException.class, 
+			() -> servicioUsuario.agregaUsuario(nombre, apellido, nombreGrupo));
+	}
 }
