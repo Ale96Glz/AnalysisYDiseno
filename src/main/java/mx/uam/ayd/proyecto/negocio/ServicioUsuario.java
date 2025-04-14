@@ -64,7 +64,7 @@ public class ServicioUsuario {
 		usuario.setNombre(nombre);
 		usuario.setApellido(apellido);
 		
-		//usuarioRepository.save(usuario); // Esto es el create
+		usuario = usuarioRepository.save(usuario); // Esto es el create
 		
 		// Conecta al grupo con el usuario
 		
@@ -73,8 +73,6 @@ public class ServicioUsuario {
 		grupoRepository.save(grupo); // Esto es el update
 		
 		return usuario;
-		
-
 	}
 
 	/**

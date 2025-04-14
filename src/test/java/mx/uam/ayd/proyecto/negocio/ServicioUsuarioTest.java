@@ -101,12 +101,20 @@ class ServicioUsuarioTest {
 		grupo.setNombre(nombreGrupo);
 		when(grupoRepository.findByNombre(nombreGrupo)).thenReturn(grupo);
 		
+		// Configurar el mock para usuarioRepository.save()
+		when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> {
+			Usuario u = invocation.getArgument(0);
+			u.setIdUsuario(1L); // Simular que se asigna un ID
+			return u;
+		});
+		
 		Usuario resultado = servicioUsuario.agregaUsuario(nombre, apellido, nombreGrupo);
 		
 		assertNotNull(resultado);
 		assertEquals(nombre, resultado.getNombre());
 		assertEquals(apellido, resultado.getApellido());
 		verify(grupoRepository).save(any(Grupo.class));
+		verify(usuarioRepository).save(any(Usuario.class));
 	}
 	
 	@Test
